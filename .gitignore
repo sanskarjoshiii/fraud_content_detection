@@ -1,0 +1,6 @@
+.env
+phishing_mnb.pkl
+phishing.pkl
+vectorizer.pkl
+email_phishing/
+.claude

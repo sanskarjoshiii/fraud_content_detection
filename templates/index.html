@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard - Cybersecurity Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #f1f5f9;
+            --sidebar-bg: #0f172a;
+            --sidebar-hover: #1e293b;
+            --sidebar-active: rgba(99, 102, 241, 0.15);
+            --card: #ffffff;
+            --border: #e2e8f0;
+            --border-light: #f1f5f9;
+            --text: #1e293b;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --primary: #4f46e5;
+            --primary-light: #eef2ff;
+            --primary-muted: #a5b4fc;
+            --safe: #059669;
+            --safe-light: #ecfdf5;
+            --safe-bg: #d1fae5;
+            --danger: #dc2626;
+            --danger-light: #fef2f2;
+            --danger-bg: #fecaca;
+            --warning: #d97706;
+            --warning-light: #fffbeb;
+            --sidebar-w: 260px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app { display: flex; min-height: 100vh; }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--sidebar-bg);
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            z-index: 200;
+            transition: transform 0.3s ease;
+        }
+        .sidebar-header { padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+        .sidebar-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #fff; }
+        .sidebar-logo-icon {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .sidebar-logo-text { font-size: 19px; font-weight: 700; letter-spacing: -0.3px; }
+        .sidebar-logo-text span { color: var(--primary-muted); }
+        .sidebar-version { font-size: 11px; color: #475569; margin-top: 2px; }
+        .sidebar-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; }
+        .sidebar-section-label {
+            font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
+            color: #475569; padding: 16px 12px 8px; font-weight: 600;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 11px 14px;
+            border-radius: 8px; cursor: pointer; transition: all 0.15s ease;
+            font-size: 14px; font-weight: 500; color: #94a3b8; text-decoration: none;
+            border: 1px solid transparent;
+        }
+        .nav-item:hover { background: var(--sidebar-hover); color: #e2e8f0; }
+        .nav-item.active { background: var(--sidebar-active); color: #fff; border-color: rgba(99,102,241,0.2); }
+        .nav-item.active .nav-icon { color: var(--primary-muted); }
+        .nav-icon { width: 20px; height: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .sidebar-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.06); }
+        .sidebar-status { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #64748b; }
+        .status-dot { width: 7px; height: 7px; background: var(--safe); border-radius: 50%; animation: pulse-dot 2.5s ease-in-out infinite; }
+        @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+        /* ===== MAIN ===== */
+        .main { flex: 1; margin-left: var(--sidebar-w); display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar {
+            background: var(--card); border-bottom: 1px solid var(--border);
+            padding: 0 32px; height: 64px; display: flex; align-items: center;
+            justify-content: space-between; position: sticky; top: 0; z-index: 100;
+        }
+        .topbar-left { display: flex; align-items: center; gap: 16px; }
+        .menu-toggle { display: none; background: none; border: none; color: var(--text); cursor: pointer; padding: 4px; }
+        .page-title { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+        .topbar-badge {
+            display: flex; align-items: center; gap: 6px; padding: 6px 12px;
+            background: var(--safe-light); border: 1px solid var(--safe-bg);
+            border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--safe);
+        }
+        .topbar-badge .dot { width: 6px; height: 6px; background: var(--safe); border-radius: 50%; }
+
+        /* ===== CONTENT ===== */
+        .content { flex: 1; padding: 28px 32px; }
+        .page { display: none; }
+        .page.active { display: block; animation: pageIn 0.25s ease-out; }
+        @keyframes pageIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+        /* ===== CARDS ===== */
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+        .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .card-title { font-size: 15px; font-weight: 600; color: var(--text); }
+        .card-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+        /* ===== DASHBOARD ===== */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card {
+            background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+            padding: 20px 22px; display: flex; align-items: flex-start; justify-content: space-between;
+        }
+        .stat-label { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .stat-value { font-size: 28px; font-weight: 800; color: var(--text); letter-spacing: -1px; line-height: 1; }
+        .stat-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .stat-icon.blue { background: var(--primary-light); color: var(--primary); }
+        .stat-icon.red { background: var(--danger-light); color: var(--danger); }
+        .stat-icon.green { background: var(--safe-light); color: var(--safe); }
+        .stat-icon.amber { background: var(--warning-light); color: var(--warning); }
+
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+        .chart-container { position: relative; height: 220px; display: flex; align-items: center; justify-content: center; }
+        .chart-empty { text-align: center; color: var(--text-muted); font-size: 13px; padding: 40px 20px; }
+        .chart-empty svg { margin-bottom: 12px; opacity: 0.3; }
+        .chart-legend { display: flex; justify-content: center; gap: 20px; margin-top: 12px; }
+        .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+        .activity-list { display: flex; flex-direction: column; }
+        .activity-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border-light); }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .activity-icon.email { background: var(--primary-light); color: var(--primary); }
+        .activity-icon.url { background: #f0fdf4; color: #16a34a; }
+        .activity-details { flex: 1; min-width: 0; }
+        .activity-title { font-size: 13px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .activity-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .activity-badge { padding: 4px 10px; border-radius: 5px; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+        .badge-safe { background: var(--safe-light); color: var(--safe); }
+        .badge-danger { background: var(--danger-light); color: var(--danger); }
+        .badge-error { background: var(--warning-light); color: var(--warning); }
+
+        /* ===== SCANNER PAGES ===== */
+        .scanner-header { margin-bottom: 28px; }
+        .scanner-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+        .scanner-desc { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+        .scanner-input-wrap { max-width: 720px; }
+        .input-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; }
+        .input-field {
+            width: 100%; padding: 14px 16px; background: var(--card);
+            border: 1px solid var(--border); border-radius: 10px; font-size: 14px;
+            color: var(--text); font-family: inherit; outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-field:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+        .input-field::placeholder { color: var(--text-muted); }
+        textarea.input-field { min-height: 160px; resize: vertical; line-height: 1.65; }
+        .input-hint { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+
+        .scan-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 12px 28px; background: var(--primary); color: #fff; border: none;
+            border-radius: 10px; font-size: 14px; font-weight: 600; font-family: inherit;
+            cursor: pointer; transition: background 0.2s, transform 0.1s, box-shadow 0.2s; margin-top: 14px;
+        }
+        .scan-btn:hover { background: #4338ca; box-shadow: 0 4px 12px rgba(79,70,229,0.25); }
+        .scan-btn:active { transform: scale(0.98); }
+        .scan-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .scan-btn-full { width: 100%; }
+        .scan-btn .spinner { display: none; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+        .scan-btn.loading .spinner { display: block; }
+        .scan-btn.loading .btn-label { display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== RESULTS GRID (side by side) ===== */
+        .results-grid { display: grid; grid-template-columns: 380px 1fr; gap: 16px; margin-top: 24px; }
+        .results-grid.hidden { display: none; }
+
+        /* ===== RESULT CARD ===== */
+        .result-card { border-radius: 12px; padding: 24px; display: flex; gap: 18px; }
+        .result-card.safe { background: var(--safe-light); border: 1px solid var(--safe-bg); }
+        .result-card.danger { background: var(--danger-light); border: 1px solid var(--danger-bg); }
+        .result-card.error { background: var(--warning-light); border: 1px solid #fde68a; }
+        .result-status-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .result-card.safe .result-status-icon { background: var(--safe-bg); color: var(--safe); }
+        .result-card.danger .result-status-icon { background: var(--danger-bg); color: var(--danger); }
+        .result-card.error .result-status-icon { background: #fde68a; color: var(--warning); }
+        .result-body { flex: 1; min-width: 0; }
+        .result-label { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+        .result-card.safe .result-label { color: var(--safe); }
+        .result-card.danger .result-label { color: var(--danger); }
+        .result-card.error .result-label { color: var(--warning); }
+        .result-message { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; }
+
+        .confidence-section { margin-bottom: 14px; }
+        .confidence-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .confidence-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+        .confidence-value { font-size: 13px; font-weight: 700; }
+        .confidence-bar { height: 8px; background: rgba(0,0,0,0.06); border-radius: 4px; overflow: hidden; }
+        .confidence-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+        .result-card.safe .confidence-value { color: var(--safe); }
+        .result-card.safe .confidence-fill { background: var(--safe); }
+        .result-card.danger .confidence-value { color: var(--danger); }
+        .result-card.danger .confidence-fill { background: var(--danger); }
+
+        .result-detail-box {
+            background: rgba(0,0,0,0.04); border-radius: 8px; padding: 12px 14px;
+            font-size: 12px; color: var(--text-secondary);
+            font-family: 'SF Mono','Cascadia Code','Courier New',monospace;
+            word-break: break-all; line-height: 1.6; white-space: pre-wrap;
+        }
+        .result-detail-label {
+            font-size: 11px; font-weight: 600; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-family: 'Inter',sans-serif;
+        }
+
+        /* ===== AI REPORT CARD ===== */
+        .report-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
+        }
+        .report-card-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 20px; border-bottom: 1px solid var(--border); background: #f8fafc;
+        }
+        .report-card-title { display: flex; align-items: center; gap: 8px; }
+        .report-card-title h3 { font-size: 14px; font-weight: 700; color: var(--text); }
+        .report-card-title .ai-badge {
+            padding: 2px 8px; background: linear-gradient(135deg, var(--primary), #7c3aed);
+            color: #fff; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+        }
+        .pdf-btn {
+            display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px;
+            background: var(--card); border: 1px solid var(--border); border-radius: 7px;
+            font-size: 12px; font-weight: 600; color: var(--text-secondary);
+            cursor: pointer; font-family: inherit; transition: all 0.15s;
+        }
+        .pdf-btn:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+
+        .report-card-body { padding: 20px; overflow-y: auto; max-height: 520px; flex: 1; }
+
+        /* Report rendered markdown */
+        .report-content h3 {
+            font-size: 14px; font-weight: 700; color: var(--primary);
+            margin: 20px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border-light);
+        }
+        .report-content h3:first-child { margin-top: 0; }
+        .report-content p { font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 8px; }
+        .report-content ul { margin: 6px 0 12px 0; padding-left: 0; list-style: none; }
+        .report-content li {
+            font-size: 13px; color: var(--text-secondary); line-height: 1.65; padding: 4px 0 4px 18px;
+            position: relative;
+        }
+        .report-content li::before {
+            content: ''; position: absolute; left: 0; top: 11px;
+            width: 6px; height: 6px; border-radius: 50%; background: var(--primary-muted);
+        }
+        .report-content strong { color: var(--text); font-weight: 600; }
+
+        /* Skeleton loading */
+        .skeleton { padding: 20px; }
+        .skeleton-line {
+            height: 13px; border-radius: 4px; margin-bottom: 10px;
+            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+            background-size: 200% 100%; animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+        .skeleton-line:nth-child(1) { width: 40%; height: 16px; margin-bottom: 16px; }
+        .skeleton-line:nth-child(2) { width: 100%; }
+        .skeleton-line:nth-child(3) { width: 90%; }
+        .skeleton-line:nth-child(4) { width: 95%; }
+        .skeleton-line:nth-child(5) { width: 60%; margin-bottom: 16px; }
+        .skeleton-line:nth-child(6) { width: 35%; height: 16px; margin-bottom: 16px; }
+        .skeleton-line:nth-child(7) { width: 85%; }
+        .skeleton-line:nth-child(8) { width: 92%; }
+        .skeleton-line:nth-child(9) { width: 78%; }
+        .skeleton-msg { text-align: center; padding-top: 8px; font-size: 12px; color: var(--text-muted); }
+
+        /* ===== INFO CARDS ===== */
+        .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 28px; max-width: 720px; }
+        .info-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; text-align: center; }
+        .info-icon { width: 38px; height: 38px; background: var(--primary-light); border-radius: 9px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; color: var(--primary); }
+        .info-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+        .info-desc { font-size: 11px; color: var(--text-muted); line-height: 1.45; }
+
+        /* ===== HISTORY ===== */
+        .history-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+        .history-filters { display: flex; gap: 8px; }
+        .filter-btn {
+            padding: 7px 14px; background: var(--card); border: 1px solid var(--border);
+            border-radius: 7px; font-size: 12px; font-weight: 500; color: var(--text-muted);
+            cursor: pointer; font-family: inherit; transition: all 0.15s;
+        }
+        .filter-btn:hover { color: var(--text); border-color: #cbd5e1; }
+        .filter-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .clear-btn {
+            padding: 7px 14px; background: var(--danger-light); border: 1px solid var(--danger-bg);
+            border-radius: 7px; font-size: 12px; font-weight: 500; color: var(--danger);
+            cursor: pointer; font-family: inherit; transition: all 0.15s;
+        }
+        .clear-btn:hover { background: var(--danger-bg); }
+        .history-table { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .history-table-head {
+            display: grid; grid-template-columns: 90px 1fr 100px 90px 150px;
+            padding: 12px 20px; background: #f8fafc; border-bottom: 1px solid var(--border);
+            font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .history-row {
+            display: grid; grid-template-columns: 90px 1fr 100px 90px 150px;
+            padding: 14px 20px; border-bottom: 1px solid var(--border-light);
+            align-items: center; font-size: 13px; transition: background 0.1s;
+        }
+        .history-row:hover { background: #f8fafc; }
+        .history-row:last-child { border-bottom: none; }
+        .type-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 600; }
+        .type-badge.email { background: var(--primary-light); color: var(--primary); }
+        .type-badge.url { background: #f0fdf4; color: #16a34a; }
+        .history-input { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); padding-right: 12px; }
+        .history-confidence { font-weight: 600; font-size: 12px; color: var(--text-secondary); }
+        .history-time { font-size: 12px; color: var(--text-muted); }
+        .history-empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .history-empty svg { margin-bottom: 16px; opacity: 0.25; }
+        .history-empty-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+        .history-empty-desc { font-size: 13px; color: var(--text-muted); }
+
+        /* ===== OVERLAYS ===== */
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 190; }
+        .sidebar-overlay.show { display: block; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .charts-grid { grid-template-columns: 1fr; }
+            .results-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; }
+            .menu-toggle { display: flex; }
+            .content { padding: 20px 16px; }
+            .topbar { padding: 0 16px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .info-grid { grid-template-columns: 1fr; }
+            .history-table-head, .history-row { grid-template-columns: 70px 1fr 80px 140px; }
+            .history-table-head > :nth-child(4), .history-row > :nth-child(4) { display: none; }
+        }
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .history-table-head, .history-row { grid-template-columns: 60px 1fr 80px; }
+            .history-table-head > :nth-child(4), .history-row > :nth-child(4),
+            .history-table-head > :nth-child(5), .history-row > :nth-child(5) { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="app">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="/" class="sidebar-logo">
+                <div class="sidebar-logo-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <div>
+                    <div class="sidebar-logo-text">Phish<span>Guard</span></div>
+                    <div class="sidebar-version">Cybersecurity Suite v2.0</div>
+                </div>
+            </a>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-label">Overview</div>
+            <a class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
+                <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>
+                Dashboard
+            </a>
+            <div class="sidebar-section-label">Scanners</div>
+            <a class="nav-item" data-page="website" onclick="navigate('website')">
+                <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span>
+                Website Scanner
+            </a>
+            <a class="nav-item" data-page="email" onclick="navigate('email')">
+                <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>
+                Email Scanner
+            </a>
+            <div class="sidebar-section-label">Analytics</div>
+            <a class="nav-item" data-page="history" onclick="navigate('history')">
+                <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                Scan History
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="sidebar-status">
+                <span class="status-dot"></span>
+                2 Models Active &middot; AI Reports Online
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
+                <h1 class="page-title" id="pageTitle">Dashboard</h1>
+            </div>
+            <div class="topbar-right">
+                <div class="topbar-badge"><span class="dot"></span>Models Operational</div>
+            </div>
+        </header>
+
+        <div class="content">
+
+            <!-- ==================== DASHBOARD ==================== -->
+            <section class="page active" id="page-dashboard">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-info"><div class="stat-label">Total Scans</div><div class="stat-value" id="statTotal">0</div></div>
+                        <div class="stat-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info"><div class="stat-label">Threats Found</div><div class="stat-value" id="statThreats">0</div></div>
+                        <div class="stat-icon red"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info"><div class="stat-label">Safe Items</div><div class="stat-value" id="statSafe">0</div></div>
+                        <div class="stat-icon green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-info"><div class="stat-label">Threat Rate</div><div class="stat-value" id="statRate">0%</div></div>
+                        <div class="stat-icon amber"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                    </div>
+                </div>
+                <div class="charts-grid">
+                    <div class="card">
+                        <div class="card-header"><div><div class="card-title">Email Analysis</div><div class="card-subtitle">Legitimate vs Phishing</div></div></div>
+                        <div class="chart-container" id="emailChartWrap"><canvas id="emailChart"></canvas></div>
+                        <div class="chart-legend">
+                            <div class="legend-item"><div class="legend-dot" style="background:#059669"></div>Legitimate</div>
+                            <div class="legend-item"><div class="legend-dot" style="background:#dc2626"></div>Phishing</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div><div class="card-title">Website Analysis</div><div class="card-subtitle">Safe vs Phishing</div></div></div>
+                        <div class="chart-container" id="urlChartWrap"><canvas id="urlChart"></canvas></div>
+                        <div class="chart-legend">
+                            <div class="legend-item"><div class="legend-dot" style="background:#059669"></div>Safe</div>
+                            <div class="legend-item"><div class="legend-dot" style="background:#dc2626"></div>Phishing</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><div><div class="card-title">7-Day Activity</div><div class="card-subtitle">Scans per day</div></div></div>
+                        <div class="chart-container" id="activityChartWrap"><canvas id="activityChart"></canvas></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><div><div class="card-title">Recent Scans</div><div class="card-subtitle">Last 5 scan results</div></div></div>
+                    <div class="activity-list" id="recentActivity"></div>
+                </div>
+            </section>
+
+            <!-- ==================== WEBSITE SCANNER ==================== -->
+            <section class="page" id="page-website">
+                <div class="scanner-header">
+                    <div class="scanner-title">Website Phishing Scanner</div>
+                    <div class="scanner-desc">Enter any URL to check if it is a phishing site. Our ML model scans first, then AI generates a detailed security report.</div>
+                </div>
+                <div class="scanner-input-wrap">
+                    <div class="card">
+                        <label class="input-label" for="urlInput">Website URL</label>
+                        <input type="text" id="urlInput" class="input-field" placeholder="https://example.com" autocomplete="off">
+                        <div class="input-hint">Paste the full URL including http:// or https://</div>
+                        <button class="scan-btn scan-btn-full" id="urlScanBtn" onclick="scanUrl()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                            <span class="btn-label">Scan Website</span>
+                            <div class="spinner"></div>
+                        </button>
+                    </div>
+                </div>
+                <div class="results-grid hidden" id="urlResultsGrid">
+                    <div id="urlResultCol"></div>
+                    <div id="urlReportCol"></div>
+                </div>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="info-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                        <div class="info-title">ML Powered</div><div class="info-desc">Logistic Regression trained on 549K+ URLs</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+                        <div class="info-title">Instant + AI</div><div class="info-desc">ML scan first, then AI-powered deep analysis</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                        <div class="info-title">PDF Report</div><div class="info-desc">Download detailed security analysis as PDF</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== EMAIL SCANNER ==================== -->
+            <section class="page" id="page-email">
+                <div class="scanner-header">
+                    <div class="scanner-title">Email Phishing Analyzer</div>
+                    <div class="scanner-desc">Paste the full email content below. BERT model analyzes first, then AI generates a report with phishing word analysis.</div>
+                </div>
+                <div class="scanner-input-wrap">
+                    <div class="card">
+                        <label class="input-label" for="emailInput">Email Content</label>
+                        <textarea id="emailInput" class="input-field" placeholder="Paste the full email text here...&#10;&#10;Example: Dear Customer, Your account has been compromised. Click here to verify your identity immediately..."></textarea>
+                        <div class="input-hint">Maximum 512 tokens supported by the BERT model</div>
+                        <button class="scan-btn scan-btn-full" id="emailScanBtn" onclick="scanEmail()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            <span class="btn-label">Analyze Email</span>
+                            <div class="spinner"></div>
+                        </button>
+                    </div>
+                </div>
+                <div class="results-grid hidden" id="emailResultsGrid">
+                    <div id="emailResultCol"></div>
+                    <div id="emailReportCol"></div>
+                </div>
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="info-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L2 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+                        <div class="info-title">BERT Powered</div><div class="info-desc">Deep learning NLP with 110M parameters</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+                        <div class="info-title">Word Analysis</div><div class="info-desc">AI identifies phishing words with contribution %</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+                        <div class="info-title">PDF Report</div><div class="info-desc">Download full security analysis as PDF</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== HISTORY ==================== -->
+            <section class="page" id="page-history">
+                <div class="history-header">
+                    <div>
+                        <div class="scanner-title" style="margin-bottom:4px">Scan History</div>
+                        <div class="scanner-desc">View all your previous scans and their results.</div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center">
+                        <div class="history-filters" id="historyFilters">
+                            <button class="filter-btn active" data-filter="all" onclick="filterHistory('all')">All</button>
+                            <button class="filter-btn" data-filter="email" onclick="filterHistory('email')">Emails</button>
+                            <button class="filter-btn" data-filter="url" onclick="filterHistory('url')">Websites</button>
+                        </div>
+                        <button class="clear-btn" onclick="clearHistory()">Clear All</button>
+                    </div>
+                </div>
+                <div class="history-table">
+                    <div class="history-table-head"><div>Type</div><div>Input</div><div>Status</div><div>Confidence</div><div>Date &amp; Time</div></div>
+                    <div id="historyBody"></div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<script>
+/* ===== STORAGE ===== */
+const STORAGE_KEY = 'phishguard_history';
+function getHistory() { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+function saveHistory(h) { localStorage.setItem(STORAGE_KEY, JSON.stringify(h)); }
+
+function addScan(scan) {
+    const h = getHistory();
+    scan.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    scan.timestamp = new Date().toISOString();
+    h.unshift(scan);
+    if (h.length > 200) h.length = 200;
+    saveHistory(h);
+    refreshDashboard();
+    refreshHistory();
+}
+
+function clearHistory() {
+    if (!confirm('Clear all scan history?')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    refreshDashboard();
+    refreshHistory();
+}
+
+/* ===== NAVIGATION ===== */
+const pageTitles = { dashboard:'Dashboard', website:'Website Scanner', email:'Email Scanner', history:'Scan History' };
+
+function navigate(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + page).classList.add('active');
+    document.querySelector('.nav-item[data-page="' + page + '"]').classList.add('active');
+    document.getElementById('pageTitle').textContent = pageTitles[page] || page;
+    closeSidebar();
+    if (page === 'dashboard') refreshDashboard();
+    if (page === 'history') refreshHistory();
+}
+
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('show');
+}
+document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+
+/* ===== SVG ICONS ===== */
+const ICONS = {
+    safe: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+    danger: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    error: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+};
+
+/* ===== SKELETON HTML ===== */
+function skeletonHTML() {
+    return `<div class="report-card">
+        <div class="report-card-header">
+            <div class="report-card-title"><h3>AI Security Report</h3><span class="ai-badge">AI</span></div>
+        </div>
+        <div class="skeleton">
+            <div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div>
+            <div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div>
+            <div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div>
+            <div class="skeleton-msg">Generating AI security report...</div>
+        </div>
+    </div>`;
+}
+
+/* ===== MARKDOWN RENDERER ===== */
+function renderMarkdown(md) {
+    let html = '';
+    const lines = md.split('\n');
+    let inList = false;
+
+    for (let line of lines) {
+        const trimmed = line.trim();
+
+        if (trimmed.startsWith('## ')) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<h3>' + escInline(trimmed.slice(3)) + '</h3>';
+        } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+            if (!inList) { html += '<ul>'; inList = true; }
+            html += '<li>' + escInline(trimmed.slice(2)) + '</li>';
+        } else if (/^\d+\.\s/.test(trimmed)) {
+            if (!inList) { html += '<ul>'; inList = true; }
+            html += '<li>' + escInline(trimmed.replace(/^\d+\.\s/, '')) + '</li>';
+        } else if (trimmed === '') {
+            if (inList) { html += '</ul>'; inList = false; }
+        } else {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<p>' + escInline(trimmed) + '</p>';
+        }
+    }
+    if (inList) html += '</ul>';
+    return html;
+}
+
+function escInline(str) {
+    return esc(str).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+}
+
+/* ===== URL SCANNER ===== */
+let lastUrlScan = null;
+
+async function scanUrl() {
+    const input = document.getElementById('urlInput');
+    const btn = document.getElementById('urlScanBtn');
+    const url = input.value.trim();
+    if (!url) { input.focus(); return; }
+
+    btn.classList.add('loading'); btn.disabled = true;
+
+    const grid = document.getElementById('urlResultsGrid');
+    const resultCol = document.getElementById('urlResultCol');
+    const reportCol = document.getElementById('urlReportCol');
+
+    try {
+        const res = await fetch('/api/scan-url', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ url }) });
+        const data = await res.json();
+
+        resultCol.innerHTML = buildResultCard(data);
+        reportCol.innerHTML = skeletonHTML();
+        grid.classList.remove('hidden');
+
+        addScan({ type:'url', input:url, status:data.status, label:data.label, message:data.message });
+
+        lastUrlScan = { type:'url', input:url, verdict:data.label, status:data.status };
+        fetchReport('url', url, data.label, null, reportCol);
+    } catch (err) {
+        resultCol.innerHTML = buildResultCard({ status:'error', label:'Connection Error', message:'Could not reach the server.' });
+        reportCol.innerHTML = '';
+        grid.classList.remove('hidden');
+    }
+
+    btn.classList.remove('loading'); btn.disabled = false;
+}
+
+document.getElementById('urlInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); scanUrl(); } });
+
+/* ===== EMAIL SCANNER ===== */
+let lastEmailScan = null;
+
+async function scanEmail() {
+    const input = document.getElementById('emailInput');
+    const btn = document.getElementById('emailScanBtn');
+    const email_text = input.value.trim();
+    if (!email_text) { input.focus(); return; }
+
+    btn.classList.add('loading'); btn.disabled = true;
+
+    const grid = document.getElementById('emailResultsGrid');
+    const resultCol = document.getElementById('emailResultCol');
+    const reportCol = document.getElementById('emailReportCol');
+
+    try {
+        const res = await fetch('/api/scan-email', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email_text }) });
+        const data = await res.json();
+
+        resultCol.innerHTML = buildResultCard(data);
+        reportCol.innerHTML = skeletonHTML();
+        grid.classList.remove('hidden');
+
+        addScan({ type:'email', input: email_text.substring(0,120) + (email_text.length>120?'...':''), status:data.status, label:data.label, message:data.message, confidence:data.confidence });
+
+        lastEmailScan = { type:'email', input:email_text, verdict:data.label, status:data.status, confidence:data.confidence };
+        fetchReport('email', email_text, data.label, data.confidence, reportCol);
+    } catch (err) {
+        resultCol.innerHTML = buildResultCard({ status:'error', label:'Connection Error', message:'Could not reach the server.' });
+        reportCol.innerHTML = '';
+        grid.classList.remove('hidden');
+    }
+
+    btn.classList.remove('loading'); btn.disabled = false;
+}
+
+/* ===== BUILD RESULT CARD HTML ===== */
+function buildResultCard(data) {
+    const icon = ICONS[data.status] || ICONS.error;
+    let confHtml = '';
+    if (data.confidence != null) {
+        confHtml = `<div class="confidence-section"><div class="confidence-header"><span class="confidence-label">Model Confidence</span><span class="confidence-value">${data.confidence}%</span></div><div class="confidence-bar"><div class="confidence-fill" style="width:${data.confidence}%"></div></div></div>`;
+    }
+    let detailHtml = '';
+    if (data.url) { detailHtml = `<div class="result-detail-label">Scanned URL</div><div class="result-detail-box">${esc(data.url)}</div>`; }
+    if (data.preview) { detailHtml = `<div class="result-detail-label">Email Preview</div><div class="result-detail-box">${esc(data.preview)}</div>`; }
+
+    return `<div class="result-card ${data.status}"><div class="result-status-icon">${icon}</div><div class="result-body"><div class="result-label">${esc(data.label)}</div><div class="result-message">${esc(data.message)}</div>${confHtml}${detailHtml}</div></div>`;
+}
+
+/* ===== FETCH AI REPORT ===== */
+async function fetchReport(type, inputData, verdict, confidence, container) {
+    try {
+        const res = await fetch('/api/report', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ type, input: inputData, verdict, confidence })
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            const reportMd = data.report;
+            const scanData = type === 'url' ? lastUrlScan : lastEmailScan;
+            if (scanData) scanData.report = reportMd;
+
+            container.innerHTML = `<div class="report-card">
+                <div class="report-card-header">
+                    <div class="report-card-title"><h3>AI Security Report</h3><span class="ai-badge">AI</span></div>
+                    <button class="pdf-btn" onclick="downloadPDF('${type}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Download PDF
+                    </button>
+                </div>
+                <div class="report-card-body"><div class="report-content">${renderMarkdown(reportMd)}</div></div>
+            </div>`;
+        } else {
+            container.innerHTML = `<div class="report-card"><div class="report-card-header"><div class="report-card-title"><h3>AI Security Report</h3><span class="ai-badge">AI</span></div></div><div class="report-card-body"><div class="chart-empty"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div>Could not generate AI report</div><div style="margin-top:4px;font-size:11px">${esc(data.report)}</div></div></div></div>`;
+        }
+    } catch (err) {
+        container.innerHTML = `<div class="report-card"><div class="report-card-header"><div class="report-card-title"><h3>AI Security Report</h3><span class="ai-badge">AI</span></div></div><div class="report-card-body"><div class="chart-empty"><div>Network error generating report</div></div></div></div>`;
+    }
+}
+
+/* ===== PDF DOWNLOAD ===== */
+function downloadPDF(type) {
+    const scanData = type === 'url' ? lastUrlScan : lastEmailScan;
+    if (!scanData || !scanData.report) { alert('No report available to download.'); return; }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const pw = doc.internal.pageSize.getWidth();
+    const ph = doc.internal.pageSize.getHeight();
+    const m = 20;
+    const cw = pw - 2 * m;
+    let y = 0;
+
+    function checkPage(needed) { if (y + needed > ph - 25) { doc.addPage(); y = 20; } }
+
+    // Header bar
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, pw, 44, 'F');
+    doc.setFillColor(79, 70, 229);
+    doc.rect(0, 42, pw, 2, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('PhishGuard', m, 27);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Security Analysis Report', m + 72, 27);
+    doc.setFontSize(9);
+    doc.text(new Date().toLocaleString(), pw - m, 27, { align: 'right' });
+
+    y = 58;
+
+    // Scan summary box
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(m, y - 5, cw, 40, 3, 3, 'FD');
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('SCAN SUMMARY', m + 10, y + 3);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(30, 41, 59);
+    doc.text('Type: ' + (type === 'url' ? 'Website URL Scan' : 'Email Content Analysis'), m + 10, y + 13);
+    const inputTrunc = scanData.input.length > 80 ? scanData.input.substring(0, 80) + '...' : scanData.input;
+    doc.text('Input: ' + inputTrunc, m + 10, y + 21);
+    let summaryLine = 'ML Verdict: ' + scanData.verdict;
+    if (scanData.confidence) summaryLine += '    |    Confidence: ' + scanData.confidence + '%';
+    doc.text(summaryLine, m + 10, y + 29);
+
+    y += 50;
+
+    // Report content
+    const lines = scanData.report.split('\n');
+    for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) { y += 3; continue; }
+
+        if (trimmed.startsWith('## ')) {
+            checkPage(18);
+            y += 6;
+            doc.setFillColor(79, 70, 229);
+            doc.rect(m, y - 3, 3, 12, 'F');
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(30, 41, 59);
+            doc.text(trimmed.replace('## ', ''), m + 8, y + 5);
+            y += 16;
+        } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+            checkPage(10);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(71, 85, 105);
+            const bulletText = trimmed.replace(/^[-*]\s/, '').replace(/\*\*/g, '');
+            const wrapped = doc.splitTextToSize(bulletText, cw - 15);
+            doc.text('\u2022', m + 5, y);
+            doc.text(wrapped, m + 12, y);
+            y += wrapped.length * 4.5 + 2;
+        } else if (/^\d+\.\s/.test(trimmed)) {
+            checkPage(10);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(71, 85, 105);
+            const text = trimmed.replace(/\*\*/g, '');
+            const wrapped = doc.splitTextToSize(text, cw - 10);
+            doc.text(wrapped, m + 5, y);
+            y += wrapped.length * 4.5 + 2;
+        } else {
+            checkPage(10);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(71, 85, 105);
+            const clean = trimmed.replace(/\*\*/g, '');
+            const wrapped = doc.splitTextToSize(clean, cw);
+            doc.text(wrapped, m, y);
+            y += wrapped.length * 4.5 + 2;
+        }
+    }
+
+    // Footer on all pages
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setDrawColor(226, 232, 240);
+        doc.line(m, ph - 15, pw - m, ph - 15);
+        doc.setFontSize(7);
+        doc.setTextColor(148, 163, 184);
+        doc.text('PhishGuard v2.0 | AI-Powered Cybersecurity Suite', m, ph - 8);
+        doc.text('Page ' + i + ' of ' + pageCount, pw - m, ph - 8, { align: 'right' });
+    }
+
+    doc.save('PhishGuard_Report_' + type + '_' + Date.now() + '.pdf');
+}
+
+/* ===== DASHBOARD ===== */
+function refreshDashboard() {
+    const history = getHistory();
+    const total = history.length;
+    const threats = history.filter(s => s.status === 'danger').length;
+    const safe = history.filter(s => s.status === 'safe').length;
+    const rate = total > 0 ? ((threats / total) * 100).toFixed(1) : 0;
+
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statThreats').textContent = threats;
+    document.getElementById('statSafe').textContent = safe;
+    document.getElementById('statRate').textContent = rate + '%';
+
+    const emailScans = history.filter(s => s.type === 'email');
+    const emailSafe = emailScans.filter(s => s.status === 'safe').length;
+    const emailDanger = emailScans.filter(s => s.status === 'danger').length;
+
+    const urlScans = history.filter(s => s.type === 'url');
+    const urlSafe = urlScans.filter(s => s.status === 'safe').length;
+    const urlDanger = urlScans.filter(s => s.status === 'danger').length;
+
+    updateDoughnut('emailChart', emailSafe, emailDanger, 'emailChartWrap');
+    updateDoughnut('urlChart', urlSafe, urlDanger, 'urlChartWrap');
+    updateActivityChart(history);
+    renderRecentActivity(history.slice(0, 5));
+}
+
+function updateDoughnut(canvasId, safeCount, dangerCount, wrapId) {
+    const canvas = document.getElementById(canvasId);
+    const wrap = document.getElementById(wrapId);
+
+    if (safeCount === 0 && dangerCount === 0) {
+        canvas.style.display = 'none';
+        let el = wrap.querySelector('.chart-empty');
+        if (!el) {
+            el = document.createElement('div');
+            el.className = 'chart-empty';
+            el.innerHTML = '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg><div>No data yet</div>';
+            wrap.appendChild(el);
+        }
+        return;
+    }
+
+    canvas.style.display = 'block';
+    const el = wrap.querySelector('.chart-empty');
+    if (el) el.remove();
+
+    const ref = canvasId + 'Instance';
+    if (window[ref]) {
+        window[ref].data.datasets[0].data = [safeCount, dangerCount];
+        window[ref].update();
+    } else {
+        window[ref] = new Chart(canvas.getContext('2d'), {
+            type: 'doughnut',
+            data: { labels: ['Safe','Phishing'], datasets: [{ data: [safeCount, dangerCount], backgroundColor: ['#059669','#dc2626'], borderColor: ['#d1fae5','#fecaca'], borderWidth: 2, hoverOffset: 6 }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e293b', cornerRadius: 8, padding: 10 } } }
+        });
+    }
+}
+
+function updateActivityChart(history) {
+    const canvas = document.getElementById('activityChart');
+    const wrap = document.getElementById('activityChartWrap');
+    const days = [];
+    const labels = [];
+    const now = new Date();
+
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        labels.push(d.toLocaleDateString('en-US', { weekday: 'short' }));
+        days.push(history.filter(s => s.timestamp && s.timestamp.startsWith(dateStr)).length);
+    }
+
+    const hasData = days.some(d => d > 0);
+    if (!hasData && history.length === 0) {
+        canvas.style.display = 'none';
+        let el = wrap.querySelector('.chart-empty');
+        if (!el) {
+            el = document.createElement('div');
+            el.className = 'chart-empty';
+            el.innerHTML = '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><div>No activity yet</div>';
+            wrap.appendChild(el);
+        }
+        return;
+    }
+
+    canvas.style.display = 'block';
+    const el = wrap.querySelector('.chart-empty');
+    if (el) el.remove();
+
+    if (window.activityChartInstance) {
+        window.activityChartInstance.data.labels = labels;
+        window.activityChartInstance.data.datasets[0].data = days;
+        window.activityChartInstance.update();
+    } else {
+        window.activityChartInstance = new Chart(canvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    data: days,
+                    backgroundColor: 'rgba(79,70,229,0.15)',
+                    borderColor: '#4f46e5',
+                    borderWidth: 1.5,
+                    borderRadius: 6,
+                    barPercentage: 0.6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e293b', cornerRadius: 8, padding: 10 } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11, family: 'Inter' }, color: '#94a3b8' }, grid: { color: '#f1f5f9' } },
+                    x: { ticks: { font: { size: 11, family: 'Inter' }, color: '#94a3b8' }, grid: { display: false } }
+                }
+            }
+        });
+    }
+}
+
+function renderRecentActivity(scans) {
+    const el = document.getElementById('recentActivity');
+    if (scans.length === 0) {
+        el.innerHTML = '<div class="chart-empty"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div>No recent activity</div><div style="margin-top:4px;font-size:11px">Scans will appear here once you start</div></div>';
+        return;
+    }
+    el.innerHTML = scans.map(s => {
+        const tc = s.type === 'email' ? 'email' : 'url';
+        const ti = s.type === 'email' ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>' : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>';
+        const bc = s.status==='safe'?'badge-safe':s.status==='danger'?'badge-danger':'badge-error';
+        return `<div class="activity-item"><div class="activity-icon ${tc}">${ti}</div><div class="activity-details"><div class="activity-title">${esc(s.input)}</div><div class="activity-meta">${s.type==='email'?'Email Scan':'URL Scan'} &middot; ${formatTime(s.timestamp)}</div></div><div class="activity-badge ${bc}">${esc(s.label)}</div></div>`;
+    }).join('');
+}
+
+/* ===== HISTORY ===== */
+let historyFilter = 'all';
+
+function filterHistory(f) {
+    historyFilter = f;
+    document.querySelectorAll('#historyFilters .filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
+    refreshHistory();
+}
+
+function refreshHistory() {
+    const history = getHistory();
+    const filtered = historyFilter === 'all' ? history : history.filter(s => s.type === historyFilter);
+    const body = document.getElementById('historyBody');
+
+    if (filtered.length === 0) {
+        body.innerHTML = `<div class="history-empty"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><div class="history-empty-title">No scans found</div><div class="history-empty-desc">${historyFilter==='all'?'Start scanning to build your history.':'No '+historyFilter+' scans yet.'}</div></div>`;
+        return;
+    }
+
+    body.innerHTML = filtered.map(s => {
+        const tc = s.type==='email'?'email':'url';
+        const tl = s.type==='email'?'Email':'URL';
+        const ti = s.type==='email'?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>':'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>';
+        const bc = s.status==='safe'?'badge-safe':s.status==='danger'?'badge-danger':'badge-error';
+        const conf = s.confidence != null ? s.confidence+'%' : '\u2014';
+        return `<div class="history-row"><div><span class="type-badge ${tc}">${ti} ${tl}</span></div><div class="history-input" title="${esc(s.input)}">${esc(s.input)}</div><div><span class="activity-badge ${bc}">${s.status==='safe'?'Safe':s.status==='danger'?'Phishing':'Error'}</span></div><div class="history-confidence">${conf}</div><div class="history-time">${formatTime(s.timestamp)}</div></div>`;
+    }).join('');
+}
+
+/* ===== UTILS ===== */
+function esc(str) { if (!str) return ''; const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+function formatTime(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const diff = Date.now() - d;
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return Math.floor(diff/60000) + 'm ago';
+    if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+
+/* ===== INIT ===== */
+refreshDashboard();
+</script>
+</body>
+</html>
