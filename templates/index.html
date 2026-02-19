@@ -60,13 +60,14 @@
         .sidebar-header { padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); }
         .sidebar-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #fff; }
         .sidebar-logo-icon {
-            width: 38px; height: 38px;
+            width: 45px; height: 50px;
             background: linear-gradient(135deg, var(--primary), #7c3aed);
             border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
         .sidebar-logo-text { font-size: 19px; font-weight: 700; letter-spacing: -0.3px; }
         .sidebar-logo-text span { color: var(--primary-muted); }
         .sidebar-version { font-size: 11px; color: #475569; margin-top: 2px; }
+        .sidebar-version1 { font-size: 11px; color: #475569; margin-top: 2px; margin-left: 63 px;}
         .sidebar-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; }
         .sidebar-section-label {
             font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
@@ -186,7 +187,7 @@
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* ===== RESULTS GRID (side by side) ===== */
-        .results-grid { display: grid; grid-template-columns: 380px 1fr; gap: 16px; margin-top: 24px; }
+        .results-grid { display: grid; grid-template-columns: 380px 1fr; gap: 16px; margin-top: 24px; align-items: start; }
         .results-grid.hidden { display: none; }
 
         /* ===== RESULT CARD ===== */
@@ -230,7 +231,7 @@
         /* ===== AI REPORT CARD ===== */
         .report-card {
             background: var(--card); border: 1px solid var(--border);
-            border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;
+            border-radius: 12px; display: flex; flex-direction: column;
         }
         .report-card-header {
             display: flex; align-items: center; justify-content: space-between;
@@ -250,22 +251,31 @@
         }
         .pdf-btn:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
 
-        .report-card-body { padding: 20px; overflow-y: auto; max-height: 520px; flex: 1; }
+        .report-card-body { padding: 20px; overflow-y: auto; max-height: 560px; }
 
         /* Report rendered markdown */
         .report-content h3 {
             font-size: 14px; font-weight: 700; color: var(--primary);
-            margin: 20px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border-light);
+            margin: 20px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border-light);
         }
         .report-content h3:first-child { margin-top: 0; }
-        .report-content p { font-size: 13px; color: var(--text-secondary); line-height: 1.7; margin-bottom: 8px; }
-        .report-content ul { margin: 6px 0 12px 0; padding-left: 0; list-style: none; }
+        .report-content h4 {
+            font-size: 13px; font-weight: 700; color: var(--text-secondary);
+            margin: 12px 0 6px;
+        }
+        .report-content p {
+            font-size: 13px; color: var(--text-secondary); line-height: 1.75;
+            margin-bottom: 8px; overflow-wrap: break-word; word-break: break-word;
+        }
+        .report-content ul { margin: 4px 0 14px 0; padding-left: 0; list-style: none; }
         .report-content li {
-            font-size: 13px; color: var(--text-secondary); line-height: 1.65; padding: 4px 0 4px 18px;
-            position: relative;
+            font-size: 13px; color: var(--text-secondary); line-height: 1.7;
+            padding: 5px 0 5px 20px; position: relative;
+            overflow-wrap: break-word; word-break: break-word;
         }
         .report-content li::before {
-            content: ''; position: absolute; left: 0; top: 11px;
+            content: ''; position: absolute; left: 2px;
+            top: calc(0.85em + 2px);
             width: 6px; height: 6px; border-radius: 50%; background: var(--primary-muted);
         }
         .report-content strong { color: var(--text); font-weight: 600; }
@@ -336,6 +346,82 @@
         .history-empty-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
         .history-empty-desc { font-size: 13px; color: var(--text-muted); }
 
+        /* ===== RUNTIME EMAIL SCANNER ===== */
+        .runtime-status-bar {
+            display: flex; align-items: center; justify-content: space-between;
+            background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+            padding: 14px 20px; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;
+        }
+        .runtime-status-left { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text-secondary); }
+        .runtime-status-left strong { color: var(--text); }
+        .runtime-status-dot {
+            width: 8px; height: 8px; background: var(--safe); border-radius: 50%;
+            animation: pulse-dot 2.5s ease-in-out infinite;
+        }
+        .runtime-status-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .runtime-email-item {
+            display: grid; grid-template-columns: 1fr auto auto;
+            align-items: center; gap: 16px;
+            padding: 16px 0; border-bottom: 1px solid var(--border-light);
+            transition: background 0.1s;
+        }
+        .runtime-email-item:last-child { border-bottom: none; }
+        .runtime-email-item:hover { background: #f8fafc; margin: 0 -24px; padding: 16px 24px; }
+        .runtime-email-info { min-width: 0; }
+        .runtime-email-sender {
+            font-size: 13px; font-weight: 600; color: var(--text);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .runtime-email-subject {
+            font-size: 13px; color: var(--text-secondary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;
+        }
+        .runtime-email-date { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+        .runtime-email-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .runtime-detail-btn {
+            padding: 6px 14px; background: var(--primary-light); border: 1px solid rgba(79,70,229,0.2);
+            border-radius: 7px; font-size: 12px; font-weight: 600; color: var(--primary);
+            cursor: pointer; font-family: inherit; transition: all 0.15s;
+        }
+        .runtime-detail-btn:hover { background: var(--primary); color: #fff; }
+        .runtime-delete-btn {
+            padding: 6px 10px; background: none; border: 1px solid var(--border);
+            border-radius: 7px; cursor: pointer; color: var(--text-muted); transition: all 0.15s;
+        }
+        .runtime-delete-btn:hover { background: var(--danger-light); color: var(--danger); border-color: var(--danger-bg); }
+        .runtime-modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            z-index: 300; display: flex; align-items: center; justify-content: center;
+            padding: 20px; animation: fadeIn 0.2s ease-out;
+        }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        .runtime-modal {
+            background: var(--card); border-radius: 16px; width: 100%; max-width: 720px;
+            max-height: 85vh; display: flex; flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2); animation: slideUp 0.25s ease-out;
+        }
+        @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        .runtime-modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px 24px; border-bottom: 1px solid var(--border);
+        }
+        .runtime-modal-header h3 { font-size: 16px; font-weight: 700; color: var(--text); }
+        .runtime-modal-close {
+            width: 32px; height: 32px; background: none; border: 1px solid var(--border);
+            border-radius: 8px; font-size: 18px; cursor: pointer; color: var(--text-muted);
+            display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+        }
+        .runtime-modal-close:hover { background: var(--danger-light); color: var(--danger); border-color: var(--danger-bg); }
+        .runtime-modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+        .runtime-detail-meta { margin-bottom: 20px; }
+        .runtime-detail-row { display: flex; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+        .runtime-detail-label-sm {
+            font-weight: 600; color: var(--text-muted); min-width: 70px;
+            font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px;
+        }
+        .runtime-detail-value { color: var(--text-secondary); word-break: break-word; }
+        .runtime-modal-report { margin-top: 20px; }
+
         /* ===== OVERLAYS ===== */
         .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 190; }
         .sidebar-overlay.show { display: block; }
@@ -344,7 +430,7 @@
         @media (max-width: 1024px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .charts-grid { grid-template-columns: 1fr; }
-            .results-grid { grid-template-columns: 1fr; }
+            .results-grid { grid-template-columns: 1fr; align-items: start; }
         }
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
@@ -357,6 +443,9 @@
             .info-grid { grid-template-columns: 1fr; }
             .history-table-head, .history-row { grid-template-columns: 70px 1fr 80px 140px; }
             .history-table-head > :nth-child(4), .history-row > :nth-child(4) { display: none; }
+            .runtime-email-item { grid-template-columns: 1fr; gap: 10px; }
+            .runtime-status-bar { flex-direction: column; align-items: flex-start; }
+            .runtime-modal { max-width: 100%; margin: 10px; }
         }
         @media (max-width: 480px) {
             .stats-grid { grid-template-columns: 1fr; }
@@ -380,7 +469,7 @@
                 </div>
                 <div>
                     <div class="sidebar-logo-text">Phish<span>Guard</span></div>
-                    <div class="sidebar-version">Cybersecurity Suite v2.0</div>
+                    <div class="sidebar-version">Cybersecurity Expert v0.1</div>
                 </div>
             </a>
         </div>
@@ -403,6 +492,15 @@
             <a class="nav-item" data-page="history" onclick="navigate('history')">
                 <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
                 Scan History
+            </a>
+            <div class="sidebar-section-label">Email Monitor</div>
+            <a class="nav-item" data-page="runtime" onclick="navigate('runtime')">
+                <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/><line x1="2" y1="20" x2="8" y2="14"/><line x1="22" y1="20" x2="16" y2="14"/></svg></span>
+                Runtime Scanner
+            </a>
+            <a class="nav-item" data-page="runtime-dashboard" onclick="navigate('runtime-dashboard')">
+                <span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg></span>
+                Runtime Dashboard
             </a>
         </nav>
         <div class="sidebar-footer">
@@ -574,6 +672,155 @@
                     <div id="historyBody"></div>
                 </div>
             </section>
+
+            <!-- ==================== RUNTIME EMAIL SCANNER ==================== -->
+            <section class="page" id="page-runtime">
+                <div class="scanner-header">
+                    <div class="scanner-title">Runtime Email Scanner</div>
+                    <div class="scanner-desc">Connect to your Gmail account to automatically scan incoming emails for phishing threats in real-time.</div>
+                </div>
+
+                <!-- Connection Panel -->
+                <div id="runtimeConnectPanel">
+                    <div class="card" style="max-width:540px">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">Connect to Gmail</div>
+                                <div class="card-subtitle">Use an App Password for secure access</div>
+                            </div>
+                            <div class="stat-icon blue">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                            </div>
+                        </div>
+                        <label class="input-label" for="runtimeEmail">Gmail Address</label>
+                        <input type="email" id="runtimeEmail" class="input-field" placeholder="your.email@gmail.com" autocomplete="email">
+                        <div style="height:12px"></div>
+                        <label class="input-label" for="runtimePassword">App Password</label>
+                        <input type="password" id="runtimePassword" class="input-field" placeholder="xxxx xxxx xxxx xxxx" autocomplete="off">
+                        <div class="input-hint" style="margin-top:8px">
+                            <strong>How to get an App Password:</strong> Go to
+                            <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener" style="color:var(--primary)">Google Account &rarr; App Passwords</a>,
+                            select "Mail", generate a 16-character password, and paste it above. Requires 2-Step Verification.
+                        </div>
+                        <button class="scan-btn scan-btn-full" id="runtimeConnectBtn" onclick="runtimeConnect()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                            <span class="btn-label">Connect &amp; Scan</span>
+                            <div class="spinner"></div>
+                        </button>
+                        <div id="runtimeConnectStatus" style="display:none;text-align:center;margin-top:12px;font-size:12px;color:var(--primary);font-weight:500"></div>
+                    </div>
+                </div>
+
+                <!-- Connected State -->
+                <div id="runtimeConnectedPanel" style="display:none">
+                    <div class="runtime-status-bar">
+                        <div class="runtime-status-left">
+                            <span class="runtime-status-dot"></span>
+                            <span>Connected to <strong id="runtimeConnectedEmail"></strong></span>
+                        </div>
+                        <div class="runtime-status-right">
+                            <button class="scan-btn" style="padding:8px 16px;font-size:12px;margin-top:0" id="runtimeRefreshBtn" onclick="runtimeRefresh()">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                                <span class="btn-label">Refresh</span>
+                                <div class="spinner"></div>
+                            </button>
+                            <button class="clear-btn" onclick="runtimeDeleteAll()">Delete All</button>
+                            <button class="clear-btn" style="background:var(--warning-light);border-color:#fde68a;color:var(--warning)" onclick="runtimeDisconnect()">Disconnect</button>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+                        <div class="stat-card">
+                            <div class="stat-info"><div class="stat-label">Emails Scanned</div><div class="stat-value" id="rtStatTotal">0</div></div>
+                            <div class="stat-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-info"><div class="stat-label">Phishing</div><div class="stat-value" id="rtStatPhishing">0</div></div>
+                            <div class="stat-icon red"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-info"><div class="stat-label">Safe</div><div class="stat-value" id="rtStatSafe">0</div></div>
+                            <div class="stat-icon green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+                        </div>
+                    </div>
+
+                    <div class="card" id="runtimeEmailListCard">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">Scanned Emails</div>
+                                <div class="card-subtitle" id="rtEmailCount">0 emails</div>
+                            </div>
+                        </div>
+                        <div id="runtimeEmailList"></div>
+                    </div>
+                </div>
+
+                <!-- Detail Modal -->
+                <div class="runtime-modal-overlay" id="runtimeModal" style="display:none">
+                    <div class="runtime-modal">
+                        <div class="runtime-modal-header">
+                            <h3>Email Analysis Details</h3>
+                            <button class="runtime-modal-close" onclick="closeRuntimeModal()">&times;</button>
+                        </div>
+                        <div class="runtime-modal-body" id="runtimeModalBody"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== RUNTIME DASHBOARD ==================== -->
+            <section class="page" id="page-runtime-dashboard">
+                <div class="scanner-header">
+                    <div class="scanner-title">Runtime Monitoring Dashboard</div>
+                    <div class="scanner-desc">Real-time analytics for your Gmail inbox phishing detection.</div>
+                </div>
+
+                <div id="rtDashNotConnected" class="card" style="text-align:center;padding:60px 20px">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" style="margin-bottom:16px;opacity:0.3"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    <div class="history-empty-title">Not Connected</div>
+                    <div class="history-empty-desc">Connect to Gmail in the Runtime Scanner to see analytics here.</div>
+                </div>
+
+                <div id="rtDashConnected" style="display:none">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-info"><div class="stat-label">Total Emails</div><div class="stat-value" id="rtdStatTotal">0</div></div>
+                            <div class="stat-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-info"><div class="stat-label">Phishing Detected</div><div class="stat-value" id="rtdStatPhishing">0</div></div>
+                            <div class="stat-icon red"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-info"><div class="stat-label">Safe Emails</div><div class="stat-value" id="rtdStatSafe">0</div></div>
+                            <div class="stat-icon green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-info"><div class="stat-label">Threat Rate</div><div class="stat-value" id="rtdStatRate">0%</div></div>
+                            <div class="stat-icon amber"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid" style="grid-template-columns:1fr 1fr">
+                        <div class="card">
+                            <div class="card-header"><div><div class="card-title">Threat Distribution</div><div class="card-subtitle">Safe vs Phishing</div></div></div>
+                            <div class="chart-container" id="rtDoughnutWrap"><canvas id="rtDoughnutChart"></canvas></div>
+                            <div class="chart-legend">
+                                <div class="legend-item"><div class="legend-dot" style="background:#059669"></div>Safe</div>
+                                <div class="legend-item"><div class="legend-dot" style="background:#dc2626"></div>Phishing</div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><div><div class="card-title">Email Timeline</div><div class="card-subtitle">Emails received over time</div></div></div>
+                            <div class="chart-container" id="rtTimelineWrap"><canvas id="rtTimelineChart"></canvas></div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header"><div><div class="card-title">Recent Phishing Alerts</div><div class="card-subtitle">Latest threats detected</div></div></div>
+                        <div class="activity-list" id="rtPhishingAlerts"></div>
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
 </div>
@@ -603,7 +850,7 @@ function clearHistory() {
 }
 
 /* ===== NAVIGATION ===== */
-const pageTitles = { dashboard:'Dashboard', website:'Website Scanner', email:'Email Scanner', history:'Scan History' };
+const pageTitles = { dashboard:'Dashboard', website:'Website Scanner', email:'Email Scanner', history:'Scan History', runtime:'Runtime Email Scanner', 'runtime-dashboard':'Runtime Dashboard' };
 
 function navigate(page) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -614,6 +861,8 @@ function navigate(page) {
     closeSidebar();
     if (page === 'dashboard') refreshDashboard();
     if (page === 'history') refreshHistory();
+    if (page === 'runtime') refreshRuntimeList();
+    if (page === 'runtime-dashboard') refreshRuntimeDashboard();
 }
 
 function toggleSidebar() {
@@ -657,9 +906,15 @@ function renderMarkdown(md) {
     for (let line of lines) {
         const trimmed = line.trim();
 
-        if (trimmed.startsWith('## ')) {
+        if (trimmed.startsWith('### ')) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<h4>' + escInline(trimmed.slice(4)) + '</h4>';
+        } else if (trimmed.startsWith('## ')) {
             if (inList) { html += '</ul>'; inList = false; }
             html += '<h3>' + escInline(trimmed.slice(3)) + '</h3>';
+        } else if (trimmed.startsWith('# ')) {
+            if (inList) { html += '</ul>'; inList = false; }
+            html += '<h3>' + escInline(trimmed.slice(2)) + '</h3>';
         } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
             if (!inList) { html += '<ul>'; inList = true; }
             html += '<li>' + escInline(trimmed.slice(2)) + '</li>';
@@ -834,25 +1089,40 @@ function downloadPDF(type) {
 
     y = 58;
 
-    // Scan summary box
+    // Scan summary box — strip newlines from input so jsPDF doesn't auto-wrap onto Verdict line
+    const cleanInput = (scanData.input || '').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const inputDisplay = cleanInput.length > 90 ? cleanInput.substring(0, 90) + '...' : cleanInput;
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const inputWrapped = doc.splitTextToSize('Input: ' + inputDisplay, cw - 20);
+    const lineGap = 7;
+    const boxH = 14 + lineGap + (inputWrapped.length * lineGap) + lineGap + 10;
+
     doc.setFillColor(248, 250, 252);
     doc.setDrawColor(226, 232, 240);
-    doc.roundedRect(m, y - 5, cw, 40, 3, 3, 'FD');
+    doc.roundedRect(m, y - 5, cw, boxH, 3, 3, 'FD');
+
     doc.setTextColor(100, 116, 139);
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text('SCAN SUMMARY', m + 10, y + 3);
+    doc.text('SCAN SUMMARY', m + 10, y + 4);
+
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(30, 41, 59);
-    doc.text('Type: ' + (type === 'url' ? 'Website URL Scan' : 'Email Content Analysis'), m + 10, y + 13);
-    const inputTrunc = scanData.input.length > 80 ? scanData.input.substring(0, 80) + '...' : scanData.input;
-    doc.text('Input: ' + inputTrunc, m + 10, y + 21);
-    let summaryLine = 'ML Verdict: ' + scanData.verdict;
-    if (scanData.confidence) summaryLine += '    |    Confidence: ' + scanData.confidence + '%';
-    doc.text(summaryLine, m + 10, y + 29);
 
-    y += 50;
+    let sy = y + 14;
+    doc.text('Type: ' + (type === 'url' ? 'Website URL Scan' : 'Email Content Analysis'), m + 10, sy);
+    sy += lineGap;
+    doc.text(inputWrapped, m + 10, sy);
+    sy += inputWrapped.length * lineGap;
+
+    let summaryLine = 'Verdict: ' + scanData.verdict;
+    if (scanData.confidence) summaryLine += '   |   Confidence: ' + scanData.confidence + '%';
+    doc.text(summaryLine, m + 10, sy);
+
+    y = (y - 5) + boxH + 12;
 
     // Report content
     const lines = scanData.report.split('\n');
@@ -1093,6 +1363,379 @@ function formatTime(iso) {
     if (diff < 3600000) return Math.floor(diff/60000) + 'm ago';
     if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
     return d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' ' + d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+
+/* ===== RUNTIME EMAIL SCANNER ===== */
+let runtimeConnected = false;
+let runtimeEmails = [];
+let runtimePollInterval = null;
+let currentRuntimeReport = null;
+
+async function runtimeConnect() {
+    const emailInput = document.getElementById('runtimeEmail');
+    const passInput = document.getElementById('runtimePassword');
+    const btn = document.getElementById('runtimeConnectBtn');
+    const statusEl = document.getElementById('runtimeConnectStatus');
+    const emailAddr = emailInput.value.trim();
+    const appPass = passInput.value.trim();
+
+    if (!emailAddr || !appPass) { emailInput.focus(); return; }
+
+    btn.classList.add('loading'); btn.disabled = true;
+    statusEl.style.display = 'block';
+    statusEl.textContent = 'Connecting to Gmail and fetching emails... This may take 30-60 seconds.';
+
+    try {
+        const res = await fetch('/api/runtime/connect', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ email: emailAddr, app_password: appPass })
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            runtimeConnected = true;
+            runtimeEmails = data.emails || [];
+            document.getElementById('runtimeConnectPanel').style.display = 'none';
+            document.getElementById('runtimeConnectedPanel').style.display = 'block';
+            document.getElementById('runtimeConnectedEmail').textContent = data.email;
+            passInput.value = '';
+            updateRuntimeStats();
+            renderRuntimeEmailList();
+            startRuntimePolling();
+        } else {
+            alert(data.message || 'Connection failed.');
+        }
+    } catch (err) {
+        alert('Network error. Could not connect.');
+    }
+
+    btn.classList.remove('loading'); btn.disabled = false;
+    statusEl.style.display = 'none';
+}
+
+function startRuntimePolling() {
+    stopRuntimePolling();
+    runtimePollInterval = setInterval(runtimeRefresh, 30000);
+}
+
+function stopRuntimePolling() {
+    if (runtimePollInterval) { clearInterval(runtimePollInterval); runtimePollInterval = null; }
+}
+
+async function runtimeRefresh() {
+    if (!runtimeConnected) return;
+    const btn = document.getElementById('runtimeRefreshBtn');
+    if (btn) { btn.classList.add('loading'); btn.disabled = true; }
+    try {
+        const res = await fetch('/api/runtime/fetch', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        const data = await res.json();
+        if (data.status === 'success' && data.emails && data.emails.length > 0) {
+            runtimeEmails = [...data.emails, ...runtimeEmails];
+            updateRuntimeStats();
+            renderRuntimeEmailList();
+        }
+    } catch (err) {
+        console.error('Runtime fetch failed:', err);
+    }
+    if (btn) { btn.classList.remove('loading'); btn.disabled = false; }
+}
+
+function refreshRuntimeList() {
+    if (runtimeConnected) {
+        document.getElementById('runtimeConnectPanel').style.display = 'none';
+        document.getElementById('runtimeConnectedPanel').style.display = 'block';
+        renderRuntimeEmailList();
+        updateRuntimeStats();
+    } else {
+        document.getElementById('runtimeConnectPanel').style.display = 'block';
+        document.getElementById('runtimeConnectedPanel').style.display = 'none';
+    }
+}
+
+function updateRuntimeStats() {
+    const total = runtimeEmails.length;
+    const phishing = runtimeEmails.filter(e => e.status === 'danger').length;
+    const safe = runtimeEmails.filter(e => e.status === 'safe').length;
+    document.getElementById('rtStatTotal').textContent = total;
+    document.getElementById('rtStatPhishing').textContent = phishing;
+    document.getElementById('rtStatSafe').textContent = safe;
+    document.getElementById('rtEmailCount').textContent = total + ' email' + (total !== 1 ? 's' : '');
+}
+
+function renderRuntimeEmailList() {
+    const container = document.getElementById('runtimeEmailList');
+    if (runtimeEmails.length === 0) {
+        container.innerHTML = '<div class="chart-empty"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><div>No emails fetched yet</div><div style="margin-top:4px;font-size:11px">Click Refresh to check for new emails</div></div>';
+        return;
+    }
+
+    container.innerHTML = runtimeEmails.map(e => {
+        const bc = e.status === 'safe' ? 'badge-safe' : e.status === 'danger' ? 'badge-danger' : 'badge-error';
+        const bl = e.status === 'safe' ? 'Safe' : e.status === 'danger' ? 'Phishing' : 'Unknown';
+        return `<div class="runtime-email-item">
+            <div class="runtime-email-info">
+                <div class="runtime-email-sender">${esc(e.from)}</div>
+                <div class="runtime-email-subject">${esc(e.subject)}</div>
+                <div class="runtime-email-date">${formatTime(e.date)}</div>
+            </div>
+            <span class="activity-badge ${bc}">${bl} ${e.confidence ? '(' + e.confidence + '%)' : ''}</span>
+            <div class="runtime-email-actions">
+                <button class="runtime-detail-btn" onclick="runtimeSeeDetails('${e.id}')">See Details</button>
+                <button class="runtime-delete-btn" onclick="runtimeDeleteOne('${e.id}')" title="Remove">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function runtimeSeeDetails(emailId) {
+    const modal = document.getElementById('runtimeModal');
+    const body = document.getElementById('runtimeModalBody');
+    modal.style.display = 'flex';
+
+    body.innerHTML = '<div class="skeleton"><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-line"></div><div class="skeleton-msg">Loading email details...</div></div>';
+
+    try {
+        const res = await fetch('/api/runtime/email/' + emailId);
+        const data = await res.json();
+        if (data.status === 'success') {
+            const e = data.email;
+            const icon = ICONS[e.status] || ICONS.error;
+            currentRuntimeReport = { id: e.id, report: e.report, email: e };
+
+            body.innerHTML = `
+                <div class="result-card ${e.status}" style="margin-bottom:20px">
+                    <div class="result-status-icon">${icon}</div>
+                    <div class="result-body">
+                        <div class="result-label">${esc(e.label)}</div>
+                        <div class="result-message">${esc(e.message)}</div>
+                        ${e.confidence != null ? `<div class="confidence-section"><div class="confidence-header"><span class="confidence-label">Model Confidence</span><span class="confidence-value">${e.confidence}%</span></div><div class="confidence-bar"><div class="confidence-fill" style="width:${e.confidence}%"></div></div></div>` : ''}
+                    </div>
+                </div>
+                <div class="runtime-detail-meta">
+                    <div class="runtime-detail-row"><span class="runtime-detail-label-sm">From</span><span class="runtime-detail-value">${esc(e.from)}</span></div>
+                    <div class="runtime-detail-row"><span class="runtime-detail-label-sm">Subject</span><span class="runtime-detail-value">${esc(e.subject)}</span></div>
+                    <div class="runtime-detail-row"><span class="runtime-detail-label-sm">Date</span><span class="runtime-detail-value">${formatTime(e.date)}</span></div>
+                </div>
+                <div class="result-detail-label">Email Body Preview</div>
+                <div class="result-detail-box" style="max-height:200px;overflow-y:auto">${esc(e.body_preview)}</div>
+                <div class="runtime-modal-report" id="runtimeReportSection">
+                    ${e.report ? buildRuntimeReport(e.report) : `<button class="scan-btn" style="margin-top:16px" onclick="runtimeGenerateReport('${e.id}')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        <span class="btn-label">Generate AI Report</span>
+                        <div class="spinner"></div>
+                    </button>`}
+                </div>`;
+        } else {
+            body.innerHTML = '<div class="chart-empty"><div>Email not found</div></div>';
+        }
+    } catch (err) {
+        body.innerHTML = '<div class="chart-empty"><div>Error loading email details</div></div>';
+    }
+}
+
+function buildRuntimeReport(reportMd) {
+    return `<div class="report-card" style="margin-top:16px">
+        <div class="report-card-header">
+            <div class="report-card-title"><h3>AI Security Report</h3><span class="ai-badge">AI</span></div>
+            <button class="pdf-btn" onclick="downloadRuntimePDF()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Download PDF
+            </button>
+        </div>
+        <div class="report-card-body"><div class="report-content">${renderMarkdown(reportMd)}</div></div>
+    </div>`;
+}
+
+async function runtimeGenerateReport(emailId) {
+    const section = document.getElementById('runtimeReportSection');
+    section.innerHTML = skeletonHTML();
+
+    try {
+        const res = await fetch('/api/runtime/report/' + emailId, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            currentRuntimeReport.report = data.report;
+            const idx = runtimeEmails.findIndex(e => e.id === emailId);
+            if (idx >= 0) runtimeEmails[idx].report = data.report;
+            section.innerHTML = buildRuntimeReport(data.report);
+        } else {
+            section.innerHTML = '<div class="chart-empty"><div>Could not generate report. Try again.</div></div>';
+        }
+    } catch (err) {
+        section.innerHTML = '<div class="chart-empty"><div>Network error generating report.</div></div>';
+    }
+}
+
+function downloadRuntimePDF() {
+    if (!currentRuntimeReport || !currentRuntimeReport.report) {
+        alert('No report available to download.');
+        return;
+    }
+    const e = currentRuntimeReport.email;
+    const saved = lastEmailScan;
+    lastEmailScan = {
+        type: 'email',
+        input: e.from + ' | ' + e.subject,
+        verdict: e.label,
+        status: e.status,
+        confidence: e.confidence,
+        report: currentRuntimeReport.report
+    };
+    downloadPDF('email');
+    lastEmailScan = saved;
+}
+
+function closeRuntimeModal() {
+    document.getElementById('runtimeModal').style.display = 'none';
+    currentRuntimeReport = null;
+}
+
+document.getElementById('runtimeModal').addEventListener('click', function(ev) {
+    if (ev.target === this) closeRuntimeModal();
+});
+
+async function runtimeDeleteOne(emailId) {
+    try {
+        await fetch('/api/runtime/email/' + emailId, { method: 'DELETE' });
+        runtimeEmails = runtimeEmails.filter(e => e.id !== emailId);
+        updateRuntimeStats();
+        renderRuntimeEmailList();
+    } catch (err) {
+        alert('Failed to delete email.');
+    }
+}
+
+async function runtimeDeleteAll() {
+    if (!confirm('Delete all scanned emails from the runtime scanner? (This does NOT delete them from Gmail)')) return;
+    try {
+        await fetch('/api/runtime/emails', { method: 'DELETE' });
+        runtimeEmails = [];
+        updateRuntimeStats();
+        renderRuntimeEmailList();
+    } catch (err) {
+        alert('Failed to delete emails.');
+    }
+}
+
+async function runtimeDisconnect() {
+    if (!confirm('Disconnect from Gmail? All scanned emails will be cleared.')) return;
+    stopRuntimePolling();
+    try { await fetch('/api/runtime/disconnect', { method: 'POST' }); } catch (err) { /* ignore */ }
+    runtimeConnected = false;
+    runtimeEmails = [];
+    document.getElementById('runtimeConnectPanel').style.display = 'block';
+    document.getElementById('runtimeConnectedPanel').style.display = 'none';
+}
+
+/* ===== RUNTIME DASHBOARD ===== */
+async function refreshRuntimeDashboard() {
+    const notConnected = document.getElementById('rtDashNotConnected');
+    const connected = document.getElementById('rtDashConnected');
+
+    if (!runtimeConnected) {
+        notConnected.style.display = 'block';
+        connected.style.display = 'none';
+        return;
+    }
+
+    notConnected.style.display = 'none';
+    connected.style.display = 'block';
+
+    try {
+        const res = await fetch('/api/runtime/stats');
+        const data = await res.json();
+        if (data.status !== 'success') return;
+
+        document.getElementById('rtdStatTotal').textContent = data.total;
+        document.getElementById('rtdStatPhishing').textContent = data.phishing;
+        document.getElementById('rtdStatSafe').textContent = data.safe;
+        document.getElementById('rtdStatRate').textContent = data.threat_rate + '%';
+
+        updateDoughnut('rtDoughnutChart', data.safe, data.phishing, 'rtDoughnutWrap');
+        updateRuntimeTimeline(data.hourly);
+        renderRuntimeAlerts(data.recent_phishing || []);
+    } catch (err) {
+        console.error('Runtime dashboard refresh failed:', err);
+    }
+}
+
+function updateRuntimeTimeline(hourlyData) {
+    const canvas = document.getElementById('rtTimelineChart');
+    const wrap = document.getElementById('rtTimelineWrap');
+    const entries = Object.entries(hourlyData || {}).sort((a, b) => a[0].localeCompare(b[0]));
+
+    if (entries.length === 0) {
+        canvas.style.display = 'none';
+        let el = wrap.querySelector('.chart-empty');
+        if (!el) {
+            el = document.createElement('div');
+            el.className = 'chart-empty';
+            el.innerHTML = '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><div>No timeline data yet</div>';
+            wrap.appendChild(el);
+        }
+        return;
+    }
+
+    canvas.style.display = 'block';
+    const el = wrap.querySelector('.chart-empty');
+    if (el) el.remove();
+
+    const labels = entries.map(([k]) => {
+        try { return new Date(k + ':00').toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }); }
+        catch(e) { return k; }
+    });
+    const values = entries.map(([, v]) => v);
+
+    if (window.rtTimelineChartInstance) {
+        window.rtTimelineChartInstance.data.labels = labels;
+        window.rtTimelineChartInstance.data.datasets[0].data = values;
+        window.rtTimelineChartInstance.update();
+    } else {
+        window.rtTimelineChartInstance = new Chart(canvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{ data: values, backgroundColor: 'rgba(79,70,229,0.15)', borderColor: '#4f46e5', borderWidth: 1.5, borderRadius: 6, barPercentage: 0.6 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e293b', cornerRadius: 8, padding: 10 } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11, family: 'Inter' }, color: '#94a3b8' }, grid: { color: '#f1f5f9' } },
+                    x: { ticks: { font: { size: 10, family: 'Inter' }, color: '#94a3b8', maxRotation: 45 }, grid: { display: false } }
+                }
+            }
+        });
+    }
+}
+
+function renderRuntimeAlerts(alerts) {
+    const el = document.getElementById('rtPhishingAlerts');
+    if (alerts.length === 0) {
+        el.innerHTML = '<div class="chart-empty"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><div>No phishing threats detected</div><div style="margin-top:4px;font-size:11px">Your inbox looks clean!</div></div>';
+        return;
+    }
+    el.innerHTML = alerts.map(a => {
+        return `<div class="activity-item">
+            <div class="activity-icon" style="background:var(--danger-light);color:var(--danger)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div class="activity-details">
+                <div class="activity-title">${esc(a.subject)}</div>
+                <div class="activity-meta">From: ${esc(a.from)} &middot; ${formatTime(a.date)}</div>
+            </div>
+            <div class="activity-badge badge-danger">Phishing ${a.confidence ? '(' + a.confidence + '%)' : ''}</div>
+        </div>`;
+    }).join('');
 }
 
 /* ===== INIT ===== */
