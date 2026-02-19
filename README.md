@@ -127,19 +127,32 @@ GROQ_MODEL=llama-3.3-70b-versatile
 
 Get a free API key at [console.groq.com](https://console.groq.com/).
 
-### 4. Add the BERT model
+### 4. Download and place the ML models
 
-Place the fine-tuned BERT model files inside the `email_phishing/` folder:
+All models (URL detection + Email BERT) are hosted on Google Drive due to their size and are excluded from version control.
+
+**Download link:** [Google Drive — PhishGuard Models](https://drive.google.com/drive/folders/1sqrQ7eGL-J_wu60NYbzMfbdiTIpRtZEA?usp=drive_link)
+
+The Drive folder contains:
+
+| File | Purpose | Destination |
+|------|---------|-------------|
+| `vectorizer.pkl` | TF-IDF vectorizer for URL feature extraction | project root |
+| `phishing.pkl` | Logistic Regression URL classification model | project root |
+| `email_phishing/` folder | Fine-tuned BERT model for email analysis | project root |
+
+After downloading, your project root should look like:
 
 ```
-email_phishing/
-├── config.json
-├── model.safetensors
-├── tokenizer.json
-└── tokenizer_config.json
+Fraud-Detection/
+├── vectorizer.pkl
+├── phishing.pkl
+└── email_phishing/
+    ├── config.json
+    ├── model.safetensors
+    ├── tokenizer.json
+    └── tokenizer_config.json
 ```
-
-> The model is excluded from version control via `.gitignore` due to its size. Obtain it from the project maintainer or fine-tune `bert-base-uncased` on a phishing email dataset.
 
 ### 5. Run the application
 
